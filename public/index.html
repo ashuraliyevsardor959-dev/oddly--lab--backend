@@ -200,6 +200,8 @@ async function connectTelegram() {
     });
 
     const result = await response.json();
+console.log("TELEGRAM JAVOBI:", result);
+console.log("TELEGRAM USER:", result.user);
 
     if (!result.success) {
       throw new Error(result.message);
