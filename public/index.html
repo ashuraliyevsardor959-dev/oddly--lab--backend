@@ -1,8 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="uz">
 <head>
 <meta charset="UTF-8">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Oddly Satisfying Lab</title>
 <style>
@@ -73,8 +76,13 @@ input{
 <div class="app">
  <div class="top">
   <div class="profile">
-   <div class="avatar">✦</div>
-   <div><h2 id="userName">Oddly Lab</h2><div class="small" id="welcomeText">Welcome back!</div></div>
+ <img id="profilePhoto" class="avatar" src="" alt="Profile">
+ <div>
+  <h2 id="userName">Oddly Lab</h2>
+  <div class="small" id="welcomeText">Welcome back!</div>
+  <div class="small" id="profileId">ID: Loading...</div>
+ </div>
+</div>
 
  <section id="home" class="page active">
   <div class="card">
@@ -202,7 +210,16 @@ async function connectTelegram() {
 
     document.getElementById("welcomeText").textContent =
       "Welcome to Oddly Lab!";
+document.getElementById("profileId").textContent =
+  "ID: " + result.user.telegram_id;
 
+const photo = document.getElementById("profilePhoto");
+
+if (result.user.photo_url) {
+  photo.src = result.user.photo_url;
+} else {
+  photo.style.display = "none";
+}
     document.getElementById("mainBalance").textContent =
       "$" + Number(result.user.balance).toFixed(2);
 

@@ -147,13 +147,15 @@ app.post("/api/telegram-auth", async (req, res) => {
     }
 
     res.json({
-      success: true,
-      user: {
-        telegram_id: profile.telegram_id,
-        full_name: profile.full_name,
-        balance: profile.balance
-      }
-    });
+  success: true,
+  user: {
+    telegram_id: profile.telegram_id,
+    username: profile.username,
+    full_name: profile.full_name,
+    balance: profile.balance,
+    photo_url: user.photo_url || null
+  }
+});
   } catch (error) {
     console.error("Telegram auth xatosi:", error.message);
     res.status(500).json({
