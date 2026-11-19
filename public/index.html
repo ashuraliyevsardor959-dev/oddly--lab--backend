@@ -2,6 +2,7 @@
 <html lang="uz">
 <head>
 <meta charset="UTF-8">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Oddly Satisfying Lab</title>
 <style>
@@ -73,10 +74,7 @@ input{
  <div class="top">
   <div class="profile">
    <div class="avatar">✦</div>
-   <div><h2>Oddly Lab</h2><div class="small">Welcome back!</div></div>
-  </div>
-  <div>🌐 <span class="small">UZ</span></div>
- </div>
+   <div><h2 id="userName">Oddly Lab</h2><div class="small" id="welcomeText">Welcome back!</div></div>
 
  <section id="home" class="page active">
   <div class="card">
@@ -84,7 +82,7 @@ input{
     <span class="balance-label">TOTAL BALANCE</span>
     <span class="green">● ACTIVE</span>
    </div>
-   <div class="balance">$0.00</div>
+   <div class="balance" id="mainBalance">$0.00</div>
    <div class="row">
     <span class="small">Your earnings</span>
     <span class="green">+$0.00</span>
@@ -168,7 +166,53 @@ input{
  <button onclick="showPage('withdraw',this)">⇧<br>Withdraw</button>
  <button onclick="showPage('history',this)">◷<br>History</button>
 </div>
+const API_URL = "https://oddly-lab-backend.onrender.com";
 
+async function connectTelegram() {
+  const tg = window.Telegram.WebApp;
+  tg.ready();
+  tg.expand();
+
+  const initData = tg.initData;
+
+  if (!initData) {
+    document.getElementById("welcomeText").textContent =
+      "Telegram orqali kiring";
+    return;
+  }
+
+  try {
+    const response = await fetch(API_URL + "/api/telegram-auth", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ initData })
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message);
+    }
+
+    document.getElementById("userName").textContent =
+      result.user.full_name || "User";
+
+    document.getElementById("welcomeText").textContent =
+      "Welcome to Oddly Lab!";
+
+    document.getElementById("mainBalance").textContent =
+      "$" + Number(result.user.balance).toFixed(2);
+
+  } catch (error) {
+    console.error("Ulanish xatosi:", error);
+    document.getElementById("welcomeText").textContent =
+      "Connection error";
+  }
+}
+
+connectTelegram();
 <script>
 function showPage(id,btn){
  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
