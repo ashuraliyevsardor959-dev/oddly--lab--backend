@@ -166,6 +166,7 @@ input{
  <button onclick="showPage('withdraw',this)">⇧<br>Withdraw</button>
  <button onclick="showPage('history',this)">◷<br>History</button>
 </div>
+<script>
 const API_URL = "https://oddly-lab-backend.onrender.com";
 
 async function connectTelegram() {
@@ -213,7 +214,6 @@ async function connectTelegram() {
 }
 
 connectTelegram();
-<script>
 function showPage(id,btn){
  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
  document.getElementById(id).classList.add('active');
