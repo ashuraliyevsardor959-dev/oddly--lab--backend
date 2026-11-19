@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="uz">
 <head>
@@ -227,12 +228,13 @@ if (result.user.photo_url) {
     document.getElementById("mainBalance").textContent =
       "$" + Number(result.user.balance).toFixed(2);
 
-  } catch (error) {
+    } catch (error) {
     console.error("Ulanish xatosi:", error);
     document.getElementById("welcomeText").textContent =
       "Connection error";
-  } document.getElementById("profileId").textContent =
-  "XATO: " + error.message;
+    document.getElementById("profileId").textContent =
+      "XATO: " + error.message;
+  }
 }
 
 connectTelegram();
