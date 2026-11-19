@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oddly Satisfying Lab</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#061411;color:#eafff8;
+ font-family:Arial,sans-serif;padding:18px 15px 100px;
+}
+.app{max-width:440px;margin:auto}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.profile{display:flex;align-items:center;gap:10px}
+.avatar{width:43px;height:43px;border-radius:50%;background:linear-gradient(135deg,#25e6bd,#075d50);display:grid;place-items:center;font-size:22px}
+.small{color:#83a99e;font-size:12px}
+h2{font-size:17px;margin:0}
+.card{
+ background:linear-gradient(145deg,#153d35,#09231e);
+ border:1px solid #28675a;border-radius:23px;padding:20px;
+ box-shadow:0 10px 35px #0008,inset 0 1px #ffffff18;
+ margin-bottom:17px;
+}
+.balance-label{color:#a4c7bb;font-size:13px}
+.balance{font-size:39px;font-weight:800;margin:9px 0}
+.green{color:#45e8bd}
+.row{display:flex;justify-content:space-between;align-items:center}
+.tabs{display:flex;gap:8px}
+.tabs button,.nav button{
+ background:#15372f;border:1px solid #28574d;color:#b9d8ce;
+ border-radius:12px;padding:9px 14px;
+}
+.tabs .active{background:#24b993;color:#03251d}
+.chart{height:90px;width:100%;margin-top:12px}
+.section-title{font-size:16px;margin:22px 0 12px}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.slot{
+ background:#102c25;border:1px solid #245448;
+ border-radius:14px;padding:13px 5px;text-align:center;
+}
+.slot b{display:block;color:#48dfb5;font-size:16px}
+.slot span{font-size:11px;color:#91b6a9}
+.play-area{text-align:center;padding:23px 0}
+.play{
+ width:145px;height:145px;border-radius:50%;
+ border:5px solid #247c67;
+ background:radial-gradient(circle at 35% 30%,#8affdd,#16a982 48%,#075443);
+ box-shadow:0 0 25px #20d9a477,0 0 65px #20d9a433;
+ color:#03271e;font-size:25px;font-weight:900;
+}
+.play:active{transform:scale(.96)}
+.timer{color:#a3c8ba;margin-top:13px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:#102c25;border-radius:15px;padding:14px}
+.stat strong{display:block;font-size:20px;margin-top:7px}
+.nav{
+ position:fixed;bottom:0;left:0;right:0;
+ background:#071a16ee;border-top:1px solid #245448;
+ display:flex;justify-content:space-around;padding:12px 4px;
+}
+.nav button{border:0;background:transparent;font-size:12px;padding:9px 7px}
+.page{display:none}.page.active{display:block}
+input{
+ width:100%;padding:14px;border-radius:12px;
+ background:#071a16;border:1px solid #28675a;color:white;margin:10px 0;
+}
+.action{background:#20b992;color:#04271f;border:0;border-radius:12px;padding:13px;width:100%;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="app">
+ <div class="top">
+  <div class="profile">
+   <div class="avatar">✦</div>
+   <div><h2>Oddly Lab</h2><div class="small">Welcome back!</div></div>
+  </div>
+  <div>🌐 <span class="small">UZ</span></div>
+ </div>
+
+ <section id="home" class="page active">
+  <div class="card">
+   <div class="row">
+    <span class="balance-label">TOTAL BALANCE</span>
+    <span class="green">● ACTIVE</span>
+   </div>
+   <div class="balance">$0.00</div>
+   <div class="row">
+    <span class="small">Your earnings</span>
+    <span class="green">+$0.00</span>
+   </div>
+   <div class="row" style="margin-top:20px">
+    <b>Statistics</b>
+    <div class="tabs">
+     <button class="active" onclick="period(this)">7D</button>
+     <button onclick="period(this)">14D</button>
+    </div>
+   </div>
+   <svg class="chart" viewBox="0 0 330 90" preserveAspectRatio="none">
+    <defs><linearGradient id="g" x1="0" x2="0" y1="0" y2="1">
+    <stop offset="0" stop-color="#36dfb0" stop-opacity=".35"/>
+    <stop offset="1" stop-color="#36dfb0" stop-opacity="0"/>
+    </linearGradient></defs>
+    <path d="M0 70 Q35 65 55 55 T110 60 T165 35 T220 48 T275 20 T330 25 L330 90 L0 90Z" fill="url(#g)"/>
+    <path d="M0 70 Q35 65 55 55 T110 60 T165 35 T220 48 T275 20 T330 25" fill="none" stroke="#42e5b5" stroke-width="3"/>
+   </svg>
+  </div>
+
+  <div class="row"><h3 class="section-title">Your team</h3><span class="small">6 slots</span></div>
+  <div class="slots">
+   <div class="slot">👤<b>$1.05</b><span>per hour</span></div>
+   <div class="slot">👤<b>$1.05</b><span>per hour</span></div>
+   <div class="slot">👤<b>$1.05</b><span>per hour</span></div>
+   <div class="slot">👤<b>$1.05</b><span>per hour</span></div>
+   <div class="slot">👤<b>$1.05</b><span>per hour</span></div>
+   <div class="slot">👤<b>$1.05</b><span>per hour</span></div>
+  </div>
+
+  <div class="play-area">
+   <button class="play" onclick="startWatch()">▶<br><span style="font-size:12px">WATCH</span></button>
+   <div class="timer" id="timer">Ready to watch</div>
+  </div>
+
+  <div class="card">
+   <div class="row"><b>Daily goal</b><b class="green">0 / 60 min</b></div>
+   <div style="height:8px;background:#061a15;border-radius:10px;margin-top:14px">
+    <div style="height:8px;width:0%;background:#37d9ad;border-radius:10px"></div>
+   </div>
+  </div>
+  <div class="stats">
+   <div class="stat"><span class="small">Today's earning</span><strong>$0.00</strong></div>
+   <div class="stat"><span class="small">Total watched</span><strong>0 min</strong></div>
+  </div>
+ </section>
+
+ <section id="bonus" class="page">
+  <h2>Referral bonus</h2>
+  <div class="card">
+   <div class="balance">$0.00</div>
+   <div class="small">Your referral earnings</div>
+   <h3>Invite friends</h3>
+   <p class="small">Share your link and invite friends to Oddly Lab.</p>
+   <input id="ref" value="Your referral link will appear here" readonly>
+   <button class="action" onclick="copyRef()">COPY LINK</button>
+  </div>
+ </section>
+
+ <section id="withdraw" class="page">
+  <h2>Withdraw</h2>
+  <div class="card">
+   <div class="balance">$0.00</div>
+   <div class="small">Available balance</div>
+   <input placeholder="Wallet address">
+   <input type="number" placeholder="Amount in USD">
+   <button class="action" onclick="alert('Withdrawal feature will be connected to the server')">REQUEST WITHDRAWAL</button>
+  </div>
+ </section>
+
+ <section id="history" class="page">
+  <h2>Transaction history</h2>
+  <div class="card small">No transactions yet</div>
+ </section>
+</div>
+
+<div class="nav">
+ <button onclick="showPage('home',this)">⌂<br>Home</button>
+ <button onclick="showPage('bonus',this)">♧<br>Bonus</button>
+ <button onclick="showPage('withdraw',this)">⇧<br>Withdraw</button>
+ <button onclick="showPage('history',this)">◷<br>History</button>
+</div>
+
+<script>
+function showPage(id,btn){
+ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+ document.getElementById(id).classList.add('active');
+ document.querySelectorAll('.nav button').forEach(b=>b.style.color='#b9d8ce');
+ btn.style.color='#42e5b5';
+}
+function period(btn){
+ document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+ btn.classList.add('active');
+}
+let seconds=0,watching=false;
+function startWatch(){
+ if(watching)return;
+ watching=true;
+ document.getElementById('timer').textContent='Watching: 00:00';
+ let t=setInterval(()=>{
+  seconds++;
+  let m=String(Math.floor(seconds/60)).padStart(2,'0');
+  let s=String(seconds%60).padStart(2,'0');
+  document.getElementById('timer').textContent='Watching: '+m+':'+s;
+  if(seconds>=60){clearInterval(t);watching=false;document.getElementById('timer').textContent='Demo session finished';}
+ },1000);
+}
+function copyRef(){
+ let v=document.getElementById('ref');
+ v.select();document.execCommand('copy');
+ alert('Copied');
+}
+</script>
+</body>
+</html>
