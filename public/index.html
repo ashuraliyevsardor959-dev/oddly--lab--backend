@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="uz">
 <head>
@@ -229,7 +230,8 @@ if (result.user.photo_url) {
     console.error("Ulanish xatosi:", error);
     document.getElementById("welcomeText").textContent =
       "Connection error";
-  }
+  } document.getElementById("profileId").textContent =
+  "XATO: " + error.message;
 }
 
 connectTelegram();
