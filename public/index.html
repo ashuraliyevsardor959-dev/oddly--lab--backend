@@ -1,6 +1,10 @@
 
 
 
+
+
+
+
 <!DOCTYPE html>
 <html lang="uz">
 <head>
@@ -77,7 +81,7 @@ input{
 <body>
 <div class="app">
  <div class="top">
-  <div class="profile">
+  <div class="profile" onclick="openProfile()" style="cursor:pointer">
  <img id="profilePhoto" class="avatar" src="" alt="Profile">
  <div>
   <h2 id="userName">Oddly Lab</h2>
@@ -86,7 +90,16 @@ input{
   <div class="small" id="profileId">ID: Loading...</div>
  </div>
 </div>
-</div> 
+</div
+<div id="profileModal" style="display:none;position:fixed;inset:0;background:#000b;z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#102b24;border:1px solid #28675a;border-radius:20px;padding:25px;width:100%;max-width:350px;text-align:center;color:white">
+    <img id="modalPhoto" src="" style="width:80px;height:80px;border-radius:50%;object-fit:cover;background:#245448">
+    <h2 id="modalName" style="margin-top:15px">User</h2>
+    <p id="modalUsername" class="small"></p>
+    <p id="modalId" class="small"></p>
+    <button onclick="closeProfile()" class="action">Yopish</button>
+  </div>
+</div>> 
  <section id="home" class="page active">
   <div class="card">
    <div class="row">
@@ -180,6 +193,22 @@ input{
 <script>
 const API_URL = "https://oddly-lab-backend.onrender.com";
 
+function openProfile() {
+  const photo = document.getElementById("profilePhoto");
+  document.getElementById("modalPhoto").src = photo.src;
+  document.getElementById("modalName").textContent =
+    document.getElementById("userName").textContent;
+  document.getElementById("modalUsername").textContent =
+    window.telegramUsername || "";
+  document.getElementById("modalId").textContent =
+    document.getElementById("profileId").textContent;
+  document.getElementById("profileModal").style.display = "flex";
+}
+
+function closeProfile() {
+  document.getElementById("profileModal").style.display = "none";
+}
+
 async function connectTelegram() {
   const tg = window.Telegram.WebApp;
   tg.ready();
@@ -212,6 +241,9 @@ console.log("TELEGRAM USER:", result.user);
 
     document.getElementById("userName").textContent =
       result.user.full_name || "User";
+window.telegramUsername = result.user.username
+  ? "@" + result.user.username
+  : "Username mavjud emas";
 
     document.getElementById("welcomeText").textContent =
       "Welcome to Oddly Lab!";
