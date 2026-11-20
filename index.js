@@ -236,14 +236,41 @@ app.post("/api/transactions", async (req, res) => {
 app.post("/api/withdraw", async (req, res) => {
   try {
     const user = verifyTelegramInitData(req.body.initData || "");
+    const method = String(req.body.payment_method || "");
     const wallet = String(req.body.wallet_address || "").trim();
     const amount = Number(req.body.amount);
 
+    const allowedMethods = ["USDT TRC20", "USDT BEP20", "TON", "HUMO", "Uzcard"];
+
     if (!user || !user.id) {
-      return res.status(401).json({ success: false, message: "Telegram authentication failed" });
+      return res.status(401).json({
+        success: false,
+        message: "Telegram authentication failed"
+      });
     }
 
-    if (!Number.isFinite(amount) || amount < 50 || !wallet || wallet.length < 5 || wallet.length > 500) {
+    if (!allowedMethods.includes(method)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment method"
+      });
+    }
+
+    if (method === "HUMO" || method === "Uzcard") {
+      if (!/^\\d{16}$/.test(wallet)) {
+        return res.status(400).json({
+          success: false,
+          message: "Enter a valid 16-digit card number"
+        });
+      }
+    } else if (wallet.length < 5 || wallet.length > 500) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid wallet address"
+      });
+    }
+
+    if (!Number.isFinite(amount) || amount < 50) {
       return res.status(400).json({
         success: false,
         message: "Minimum withdrawal amount is $50"
@@ -252,6 +279,7 @@ app.post("/api/withdraw", async (req, res) => {
 
     const { data, error } = await supabase.rpc("request_withdrawal", {
       p_telegram_id: user.id,
+      p_payment_method: method,
       p_wallet_address: wallet,
       p_amount: amount
     });
@@ -276,7 +304,7 @@ app.post("/api/admin/withdrawals", async (req, res) => {
 
     const { data, error } = await supabase
       .from("withdrawals")
-      .select("id,telegram_id,wallet_address,amount,status,created_at")
+      .select("id,telegram_id,payment_method,wallet_address,amount,status,created_at")
       .order("created_at", { ascending: false })
       .limit(100);
 

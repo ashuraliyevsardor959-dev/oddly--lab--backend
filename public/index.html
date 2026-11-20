@@ -173,8 +173,17 @@ input{
   <div class="card">
    <div class="balance" id="withdrawBalance">$0.00</div>
    <div class="small">Available balance</div>
-   <input id="withdrawWallet" placeholder="Wallet address">
-   <input id="withdrawAmount" type="number" min="0.000001" step="0.000001" placeholder="Amount in USD">
+   <label for="withdrawMethod">Payment method</label>
+   <select id="withdrawMethod" onchange="updateWithdrawPlaceholder()">
+    <option value="USDT TRC20">USDT (TRC20)</option>
+    <option value="USDT BEP20">USDT (BEP20)</option>
+    <option value="TON">TON</option>
+    <option value="HUMO">HUMO</option>
+    <option value="Uzcard">Uzcard</option>
+   </select>
+   <label for="withdrawWallet" id="withdrawWalletLabel">Wallet address</label>
+   <input id="withdrawWallet" placeholder="Enter wallet address">
+   <input id="withdrawAmount" type="number" min="50" step="0.000001" placeholder="Minimum $50">
    <button class="action" onclick="requestWithdrawal()">REQUEST WITHDRAWAL</button>
    <p class="small" id="withdrawMessage"></p>
   </div>
@@ -385,7 +394,8 @@ async function loadAdminWithdrawals() {
         "Request #" + w.id +
         "\nUser ID: " + w.telegram_id +
         "\nAmount: $" + Number(w.amount).toFixed(6) +
-        "\nWallet: " + w.wallet_address +
+        "\nPayment method: " + (w.payment_method || "Unknown") +
+        "\nWallet/Card: " + w.wallet_address +
         "\nStatus: " + w.status +
         "\nDate: " + new Date(w.created_at).toLocaleString();
 
@@ -510,8 +520,22 @@ function updateWatchTimer() {
     '$' + earning.toFixed(6);
 }
 
+function updateWithdrawPlaceholder() {
+  const method = document.getElementById("withdrawMethod").value;
+  const wallet = document.getElementById("withdrawWallet");
+  const label = document.getElementById("withdrawWalletLabel");
+  const isCard = method === "HUMO" || method === "Uzcard";
+
+  label.textContent = isCard ? "Card number" : "Wallet address";
+  wallet.placeholder = isCard ? "Enter 16-digit card number" : "Enter wallet address";
+  wallet.inputMode = isCard ? "numeric" : "text";
+}
+
 async function requestWithdrawal() {
-  const wallet = document.getElementById("withdrawWallet").value.trim();
+  const method = document.getElementById("withdrawMethod").value;
+  const walletInput = document.getElementById("withdrawWallet").value.trim();
+  const isCard = method === "HUMO" || method === "Uzcard";
+  const wallet = isCard ? walletInput.replace(/\s+/g, "") : walletInput;
   const amount = Number(document.getElementById("withdrawAmount").value);
   const message = document.getElementById("withdrawMessage");
   const button = document.querySelector('#withdraw button.action');
@@ -520,12 +544,16 @@ async function requestWithdrawal() {
     message.textContent = "Please open the app through Telegram.";
     return;
   }
-  if (wallet.length < 5 || wallet.length > 500) {
+  if (isCard && !/^\d{16}$/.test(wallet)) {
+    message.textContent = "Enter a valid 16-digit card number.";
+    return;
+  }
+  if (!isCard && (wallet.length < 5 || wallet.length > 500)) {
     message.textContent = "Enter a valid wallet address.";
     return;
   }
-  if (!Number.isFinite(amount) || amount <= 0 || !/^\d+(\.\d{1,6})?$/.test(String(document.getElementById("withdrawAmount").value))) {
-    message.textContent = "Enter a valid amount (maximum 6 decimal places).";
+  if (!Number.isFinite(amount) || amount < 50 || !/^\d+(\.\d{1,6})?$/.test(String(document.getElementById("withdrawAmount").value))) {
+    message.textContent = "Minimum withdrawal amount is $50.";
     return;
   }
 
@@ -538,6 +566,7 @@ async function requestWithdrawal() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         initData: window.telegramInitData,
+        payment_method: method,
         wallet_address: wallet,
         amount: amount
       })
