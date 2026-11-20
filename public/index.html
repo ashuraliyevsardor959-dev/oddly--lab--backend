@@ -519,7 +519,7 @@ async function requestWithdrawal() {
     message.textContent = "Enter a valid wallet address.";
     return;
   }
-  if (!Number.isFinite(amount) || amount <= 0 || !/^\\d+(\\.\\d{1,6})?$/.test(String(document.getElementById("withdrawAmount").value))) {
+  if (!Number.isFinite(amount) || amount <= 0 || !/^\d+(\.\d{1,6})?$/.test(String(document.getElementById("withdrawAmount").value))) {
     message.textContent = "Enter a valid amount (maximum 6 decimal places).";
     return;
   }
