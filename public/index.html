@@ -181,7 +181,9 @@ input{
 
  <section id="history" class="page">
   <h2>Transaction history</h2>
-  <div class="card small">No transactions yet</div>
+  <div class="card small" id="transactionList">
+  Loading transactions...
+</div>
  </section>
 </div>
 
@@ -273,11 +275,62 @@ if (result.user.photo_url) {
 }
 
 connectTelegram();
+
+async function loadTransactions() {
+  const list = document.getElementById("transactionList");
+  const initData = window.telegramInitData;
+
+  if (!list) return;
+  if (!initData) {
+    list.textContent = "Telegram orqali kiring";
+    return;
+  }
+
+  list.textContent = "Loading transactions...";
+
+  try {
+    const response = await fetch(API_URL + "/api/transactions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initData })
+    });
+
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error("Tranzaksiyalarni yuklab bo‘lmadi");
+    }
+
+    list.textContent = "";
+
+    if (!result.transactions || result.transactions.length === 0) {
+      list.textContent = "No transactions yet";
+      return;
+    }
+
+    result.transactions.forEach(tx => {
+      const item = document.createElement("div");
+      item.style.padding = "12px 0";
+      item.style.borderBottom = "1px solid #29443d";
+
+      const date = new Date(tx.created_at).toLocaleString();
+      item.textContent =
+        tx.type + " | $" + Number(tx.amount).toFixed(6) +
+        " | " + tx.status + " | " + date;
+
+      list.appendChild(item);
+    });
+  } catch (error) {
+    console.error("Transactions error:", error);
+    list.textContent = "Could not load transactions";
+  }
+}
+
 function showPage(id,btn){
  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
  document.getElementById(id).classList.add('active');
  document.querySelectorAll('.nav button').forEach(b=>b.style.color='#b9d8ce');
  btn.style.color='#42e5b5';
+ if (id === 'history') loadTransactions();
 }
 function period(btn){
  document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
