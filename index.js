@@ -243,8 +243,11 @@ app.post("/api/withdraw", async (req, res) => {
       return res.status(401).json({ success: false, message: "Telegram authentication failed" });
     }
 
-    if (!Number.isFinite(amount) || amount <= 0 || !wallet || wallet.length < 5 || wallet.length > 500) {
-      return res.status(400).json({ success: false, message: "Invalid wallet or amount" });
+    if (!Number.isFinite(amount) || amount < 50 || !wallet || wallet.length < 5 || wallet.length > 500) {
+      return res.status(400).json({
+        success: false,
+        message: "Minimum withdrawal amount is $50"
+      });
     }
 
     const { data, error } = await supabase.rpc("request_withdrawal", {
