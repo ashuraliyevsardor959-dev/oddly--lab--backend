@@ -262,6 +262,60 @@ app.post("/api/withdraw", async (req, res) => {
   }
 });
 
+
+app.post("/api/admin/withdrawals", async (req, res) => {
+  try {
+    const user = verifyTelegramInitData(req.body.initData || "");
+
+    if (!user || String(user.id) !== String(process.env.ADMIN_TELEGRAM_ID)) {
+      return res.status(403).json({ success: false, message: "Admin access denied" });
+    }
+
+    const { data, error } = await supabase
+      .from("withdrawals")
+      .select("id,telegram_id,wallet_address,amount,status,created_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) throw error;
+
+    return res.json({ success: true, withdrawals: data || [] });
+  } catch (error) {
+    console.error("Admin withdrawals:", error.message);
+    return res.status(500).json({ success: false, message: "Could not load withdrawals" });
+  }
+});
+
+app.post("/api/admin/withdrawal-update", async (req, res) => {
+  try {
+    const user = verifyTelegramInitData(req.body.initData || "");
+
+    if (!user || String(user.id) !== String(process.env.ADMIN_TELEGRAM_ID)) {
+      return res.status(403).json({ success: false, message: "Admin access denied" });
+    }
+
+    const withdrawalId = Number(req.body.withdrawal_id);
+    const status = String(req.body.status || "");
+
+    if (!Number.isSafeInteger(withdrawalId) || withdrawalId <= 0 ||
+        !["completed", "rejected"].includes(status)) {
+      return res.status(400).json({ success: false, message: "Invalid request" });
+    }
+
+    const { data, error } = await supabase.rpc("admin_update_withdrawal", {
+      p_withdrawal_id: withdrawalId,
+      p_status: status
+    });
+
+    if (error) throw error;
+
+    return res.json(data);
+  } catch (error) {
+    console.error("Admin withdrawal update:", error.message);
+    return res.status(400).json({ success: false, message: error.message });
+  }
+});
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Oddly Lab server: http://localhost:${PORT}`);
 });
