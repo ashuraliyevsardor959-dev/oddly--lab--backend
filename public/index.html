@@ -332,6 +332,7 @@ function showPage(id,btn){
  document.querySelectorAll('.nav button').forEach(b=>b.style.color='#b9d8ce');
  btn.style.color='#42e5b5';
  if (id === 'history') loadTransactions();
+ if (id === 'withdraw') refreshBalance();
 }
 function period(btn){
  document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
