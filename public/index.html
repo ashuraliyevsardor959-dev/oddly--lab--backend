@@ -5,6 +5,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="uz">
 <head>
@@ -150,7 +151,7 @@ input{
    </div>
   </div>
   <div class="stats">
-   <div class="stat"><span class="small">Today's earning</span><strong>$0.00</strong></div>
+   <div class="stat"><span class="small">Today's earning</span><strong id="liveEarning">$0.00</strong></div>
    <div class="stat"><span class="small">Total watched</span><strong>0 min</strong></div>
   </div>
  </section>
@@ -260,6 +261,7 @@ if (result.user.photo_url) {
 }
     document.getElementById("mainBalance").textContent =
       "$" + Number(result.user.balance).toFixed(2);
+    await restoreWatchSession();
 
     } catch (error) {
     console.error("Ulanish xatosi:", error);
@@ -285,6 +287,41 @@ function period(btn){
 let seconds = 0;
 let watching = false;
 let watchSessionId = null;
+async function restoreWatchSession() {
+  if (!window.telegramInitData) return;
+
+  try {
+    const response = await fetch(API_URL + '/api/watch-active', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        initData: window.telegramInitData
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success || !result.session) return;
+
+    watchSessionId = result.session.id;
+
+    seconds = Number(result.session.accumulated_seconds || 0);
+    watching = true;
+
+    updateWatchButton();
+    updateWatchTimer();
+
+    watchTimer = setInterval(() => {
+      seconds++;
+      updateWatchTimer();
+    }, 1000);
+
+    heartbeatTimer = setInterval(sendHeartbeat, 20000);
+
+  } catch (error) {
+    console.error('Session restore:', error);
+  }
+}
 let watchTimer = null;
 let heartbeatTimer = null;
 let heartbeatInFlight = null;
@@ -301,6 +338,10 @@ function updateWatchTimer() {
   const s = String(seconds % 60).padStart(2, '0');
   document.getElementById('timer').textContent =
     (watching ? 'Watching: ' : 'Watched: ') + m + ':' + s;
+
+  const earning = seconds / 480;
+  document.getElementById('liveEarning').textContent =
+    '$' + earning.toFixed(6);
 }
 
 async function refreshBalance() {
