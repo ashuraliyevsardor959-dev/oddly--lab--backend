@@ -96,7 +96,7 @@ app.post("/api/watch-start", async (req, res) => {
 
     const { data: active, error: findError } = await supabase
       .from("watch_sessions")
-      .select("id")
+      .select("id, accumulated_seconds")
       .eq("telegram_id", user.id)
       .eq("status", "active")
       .order("started_at", { ascending: false })
@@ -109,6 +109,7 @@ app.post("/api/watch-start", async (req, res) => {
       return res.json({
         success: true,
         session_id: active.id,
+        accumulated_seconds: active.accumulated_seconds,
         restored: true
       });
     }

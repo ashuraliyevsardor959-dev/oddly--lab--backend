@@ -666,7 +666,7 @@ async function startWatch() {
     }
 
     watchSessionId = result.session_id;
-    seconds = 0;
+    seconds = Number(result.accumulated_seconds || 0);
     watching = true;
     updateWatchButton();
     updateWatchTimer();
