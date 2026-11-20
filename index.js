@@ -117,43 +117,55 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`Oddly Lab server: http://localhost:${PORT}`);
 });
 function verifyTelegramInitData(initData) {
-  const params = new URLSearchParams(initData);
-  const hash = params.get("hash");
-
-  if (!hash) return null;
-
-  params.delete("hash");
-
-  const dataCheckString = [...params.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}=${value}`)
-    .join("\n");
-
-  const secretKey = crypto
-    .createHmac("sha256", "WebAppData")
-    .update(process.env.TELEGRAM_BOT_TOKEN)
-    .digest();
-
-  const calculatedHash = crypto
-    .createHmac("sha256", secretKey)
-    .update(dataCheckString)
-    .digest("hex");
-
-  const a = Buffer.from(hash, "hex");
-  const b = Buffer.from(calculatedHash, "hex");
-
-  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
-    return null;
-  }
-
-  const authDate = Number(params.get("auth_date"));
-
-  if (!authDate || Date.now() / 1000 - authDate > 86400) {
-    return null;
-  }
-
   try {
-    return JSON.parse(params.get("user"));
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+
+    if (!botToken || typeof initData !== "string" || !initData || initData.length > 10000) {
+      return null;
+    }
+
+    const params = new URLSearchParams(initData);
+    const hash = params.get("hash");
+
+    if (!hash || !/^[a-f0-9]{64}$/i.test(hash)) return null;
+
+    params.delete("hash");
+
+    const dataCheckString = [...params.entries()]
+      .sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)
+      .map(([key, value]) => `${key}=${value}`)
+      .join("\n");
+
+    const secretKey = crypto
+      .createHmac("sha256", "WebAppData")
+      .update(botToken)
+      .digest();
+
+    const calculatedHash = crypto
+      .createHmac("sha256", secretKey)
+      .update(dataCheckString)
+      .digest("hex");
+
+    const a = Buffer.from(hash, "hex");
+    const b = Buffer.from(calculatedHash, "hex");
+
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+      return null;
+    }
+
+    const authDate = Number(params.get("auth_date"));
+    const now = Math.floor(Date.now() / 1000);
+
+    if (!Number.isFinite(authDate) || authDate <= 0 ||
+        authDate > now + 60 || now - authDate > 86400) {
+      return null;
+    }
+
+    const user = JSON.parse(params.get("user") || "null");
+
+    if (!user || !user.id) return null;
+
+    return user;
   } catch {
     return null;
   }
