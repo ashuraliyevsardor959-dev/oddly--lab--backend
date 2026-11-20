@@ -165,6 +165,7 @@ app.post("/api/watch-stop", async (req, res) => {
   try {
     const user = verifyTelegramInitData(req.body.initData || "");
     const sessionId = req.body.session_id;
+    console.log("WATCH STOP CALLED:", new Date().toISOString(), "SESSION:", sessionId);
 
     if (!user || !user.id || !sessionId) {
       return res.status(401).json({ success: false });
