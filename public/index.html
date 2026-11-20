@@ -186,6 +186,17 @@ input{
   Loading transactions...
 </div>
  </section>
+
+<section id="admin" class="page">
+  <h2>Admin Panel</h2>
+  <div class="card">
+    <button class="action" onclick="loadAdminWithdrawals()">REFRESH REQUESTS</button>
+    <div id="adminWithdrawalList" class="small" style="margin-top:15px">
+      Loading requests...
+    </div>
+  </div>
+</section>
+
 </div>
 
 <div class="nav">
@@ -193,6 +204,8 @@ input{
  <button onclick="showPage('bonus',this)">♧<br>Bonus</button>
  <button onclick="showPage('withdraw',this)">⇧<br>Withdraw</button>
  <button onclick="showPage('history',this)">◷<br>History</button>
+
+ <button id="adminNavBtn" style="display:none" onclick="showPage('admin',this)">⚙<br>Admin</button>
 </div>
 <script>
 const API_URL = "https://oddly-lab-backend.onrender.com";
@@ -254,6 +267,10 @@ window.telegramUsername = result.user.username
       "Welcome to Oddly Lab!";
 document.getElementById("profileId").textContent =
   "ID: " + result.user.telegram_id;
+if (String(result.user.telegram_id) === "8278382602") {
+  document.getElementById("adminNavBtn").style.display = "block";
+}
+
 
 const photo = document.getElementById("profilePhoto");
 
@@ -333,7 +350,96 @@ function showPage(id,btn){
  btn.style.color='#42e5b5';
  if (id === 'history') loadTransactions();
  if (id === 'withdraw') refreshBalance();
+ if (id === 'admin') loadAdminWithdrawals();
 }
+
+async function loadAdminWithdrawals() {
+  const list = document.getElementById("adminWithdrawalList");
+  list.textContent = "Loading requests...";
+
+  try {
+    const response = await fetch(API_URL + "/api/admin/withdrawals", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initData: window.telegramInitData })
+    });
+
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "Access denied");
+    }
+
+    list.replaceChildren();
+
+    if (!result.withdrawals.length) {
+      list.textContent = "No withdrawal requests.";
+      return;
+    }
+
+    result.withdrawals.forEach(w => {
+      const card = document.createElement("div");
+      card.style.cssText = "padding:14px;margin:12px 0;background:#061a15;border-radius:12px;overflow-wrap:anywhere";
+
+      const info = document.createElement("div");
+      info.textContent =
+        "Request #" + w.id +
+        "\nUser ID: " + w.telegram_id +
+        "\nAmount: $" + Number(w.amount).toFixed(6) +
+        "\nWallet: " + w.wallet_address +
+        "\nStatus: " + w.status +
+        "\nDate: " + new Date(w.created_at).toLocaleString();
+
+      info.style.whiteSpace = "pre-wrap";
+      card.appendChild(info);
+
+      if (w.status === "pending") {
+        ["completed", "rejected"].forEach(status => {
+          const btn = document.createElement("button");
+          btn.className = "action";
+          btn.style.margin = "8px 6px 0 0";
+          btn.textContent = status.toUpperCase();
+          btn.onclick = () => updateAdminWithdrawal(w.id, status);
+          card.appendChild(btn);
+        });
+      }
+
+      list.appendChild(card);
+    });
+  } catch (error) {
+    list.textContent = "Error: " + error.message;
+  }
+}
+
+async function updateAdminWithdrawal(id, status) {
+  const message = status === "completed"
+    ? "Pul haqiqatan yuborilganini tasdiqlaysanmi?"
+    : "So‘rov rad etilsinmi? Pul foydalanuvchi balansiga qaytariladi.";
+
+  if (!confirm(message)) return;
+
+  try {
+    const response = await fetch(API_URL + "/api/admin/withdrawal-update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        initData: window.telegramInitData,
+        withdrawal_id: id,
+        status: status
+      })
+    });
+
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "Update failed");
+    }
+
+    alert("Request updated: " + status);
+    await loadAdminWithdrawals();
+  } catch (error) {
+    alert("Error: " + error.message);
+  }
+}
+
 function period(btn){
  document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
  btn.classList.add('active');
