@@ -232,6 +232,36 @@ app.post("/api/transactions", async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+
+app.post("/api/withdraw", async (req, res) => {
+  try {
+    const user = verifyTelegramInitData(req.body.initData || "");
+    const wallet = String(req.body.wallet_address || "").trim();
+    const amount = Number(req.body.amount);
+
+    if (!user || !user.id) {
+      return res.status(401).json({ success: false, message: "Telegram authentication failed" });
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0 || !wallet || wallet.length < 5 || wallet.length > 500) {
+      return res.status(400).json({ success: false, message: "Invalid wallet or amount" });
+    }
+
+    const { data, error } = await supabase.rpc("request_withdrawal", {
+      p_telegram_id: user.id,
+      p_wallet_address: wallet,
+      p_amount: amount
+    });
+
+    if (error) throw error;
+
+    res.json(data);
+  } catch (error) {
+    console.error("Withdraw error:", error.message);
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Oddly Lab server: http://localhost:${PORT}`);
 });
