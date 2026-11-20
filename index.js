@@ -72,41 +72,20 @@ app.post("/api/watch-active", async (req, res) => {
       return res.status(401).json({ success: false });
     }
 
-    const { data: active, error: findError } = await supabase
-      .from("watch_sessions")
-      .select("id")
-      .eq("telegram_id", user.id)
-      .eq("status", "active")
-      .order("started_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (findError) throw findError;
-
-    if (!active) {
-      return res.json({ success: true, session: null });
-    }
-
-    const { data, error } = await supabase
-      .from("watch_sessions")
-      .update({ last_heartbeat_at: new Date().toISOString() })
-      .eq("id", active.id)
-      .eq("telegram_id", user.id)
-      .eq("status", "active")
-      .select("id, started_at, last_heartbeat_at, accumulated_seconds")
-      .maybeSingle();
+    const { data, error } = await supabase.rpc(
+      "restore_watch_session",
+      { p_telegram_id: user.id }
+    );
 
     if (error) throw error;
 
-    res.json({
-      success: true,
-      session: data
-    });
+    res.json(data);
   } catch (error) {
     console.error("Watch active:", error.message);
     res.status(500).json({ success: false });
   }
 });
+
 app.post("/api/watch-start", async (req, res) => {
   try {
     const user = verifyTelegramInitData(req.body.initData || "");
