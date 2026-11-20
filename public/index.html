@@ -417,6 +417,9 @@ async function updateAdminWithdrawal(id, status) {
 
   if (!confirm(message)) return;
 
+  const buttons = document.querySelectorAll("#adminWithdrawalList button");
+  buttons.forEach(btn => btn.disabled = true);
+
   try {
     const response = await fetch(API_URL + "/api/admin/withdrawal-update", {
       method: "POST",
@@ -429,6 +432,7 @@ async function updateAdminWithdrawal(id, status) {
     });
 
     const result = await response.json();
+
     if (!response.ok || !result.success) {
       throw new Error(result.message || "Update failed");
     }
@@ -437,6 +441,7 @@ async function updateAdminWithdrawal(id, status) {
     await loadAdminWithdrawals();
   } catch (error) {
     alert("Error: " + error.message);
+    buttons.forEach(btn => btn.disabled = false);
   }
 }
 
