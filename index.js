@@ -206,7 +206,32 @@ app.post("/api/watch-stop", async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+app.post("/api/transactions", async (req, res) => {
+  try {
+    const user = verifyTelegramInitData(req.body.initData || "");
 
+    if (!user || !user.id) {
+      return res.status(401).json({ success: false });
+    }
+
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("id, type, amount, status, created_at")
+      .eq("telegram_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      transactions: data || []
+    });
+  } catch (error) {
+    console.error("Transactions:", error.message);
+    res.status(500).json({ success: false });
+  }
+});
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Oddly Lab server: http://localhost:${PORT}`);
 });
