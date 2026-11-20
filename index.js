@@ -2,6 +2,7 @@
 
 
 
+
 const crypto = require("crypto");
 const express = require("express");
 const cors = require("cors");
@@ -63,12 +64,74 @@ app.get("/api/db-check", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+app.post("/api/watch-active", async (req, res) => {
+  try {
+    const user = verifyTelegramInitData(req.body.initData || "");
+
+    if (!user || !user.id) {
+      return res.status(401).json({ success: false });
+    }
+
+    const { data: active, error: findError } = await supabase
+      .from("watch_sessions")
+      .select("id")
+      .eq("telegram_id", user.id)
+      .eq("status", "active")
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (findError) throw findError;
+
+    if (!active) {
+      return res.json({ success: true, session: null });
+    }
+
+    const { data, error } = await supabase
+      .from("watch_sessions")
+      .update({ last_heartbeat_at: new Date().toISOString() })
+      .eq("id", active.id)
+      .eq("telegram_id", user.id)
+      .eq("status", "active")
+      .select("id, started_at, last_heartbeat_at, accumulated_seconds")
+      .maybeSingle();
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      session: data
+    });
+  } catch (error) {
+    console.error("Watch active:", error.message);
+    res.status(500).json({ success: false });
+  }
+});
 app.post("/api/watch-start", async (req, res) => {
   try {
     const user = verifyTelegramInitData(req.body.initData || "");
 
     if (!user || !user.id) {
       return res.status(401).json({ success: false });
+    }
+
+    const { data: active, error: findError } = await supabase
+      .from("watch_sessions")
+      .select("id")
+      .eq("telegram_id", user.id)
+      .eq("status", "active")
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (findError) throw findError;
+
+    if (active) {
+      return res.json({
+        success: true,
+        session_id: active.id,
+        restored: true
+      });
     }
 
     const { data, error } = await supabase
@@ -82,7 +145,11 @@ app.post("/api/watch-start", async (req, res) => {
 
     if (error) throw error;
 
-    res.json({ success: true, session_id: data.id });
+    res.json({
+      success: true,
+      session_id: data.id,
+      restored: false
+    });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ success: false });
