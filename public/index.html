@@ -171,11 +171,12 @@ input{
  <section id="withdraw" class="page">
   <h2>Withdraw</h2>
   <div class="card">
-   <div class="balance">$0.00</div>
+   <div class="balance" id="withdrawBalance">$0.00</div>
    <div class="small">Available balance</div>
-   <input placeholder="Wallet address">
-   <input type="number" placeholder="Amount in USD">
-   <button class="action" onclick="alert('Withdrawal feature will be connected to the server')">REQUEST WITHDRAWAL</button>
+   <input id="withdrawWallet" placeholder="Wallet address">
+   <input id="withdrawAmount" type="number" min="0.000001" step="0.000001" placeholder="Amount in USD">
+   <button class="action" onclick="requestWithdrawal()">REQUEST WITHDRAWAL</button>
+   <p class="small" id="withdrawMessage"></p>
   </div>
  </section>
 
@@ -397,6 +398,57 @@ function updateWatchTimer() {
     '$' + earning.toFixed(6);
 }
 
+async function requestWithdrawal() {
+  const wallet = document.getElementById("withdrawWallet").value.trim();
+  const amount = Number(document.getElementById("withdrawAmount").value);
+  const message = document.getElementById("withdrawMessage");
+  const button = document.querySelector('#withdraw button.action');
+
+  if (!window.telegramInitData) {
+    message.textContent = "Please open the app through Telegram.";
+    return;
+  }
+  if (wallet.length < 5 || wallet.length > 500) {
+    message.textContent = "Enter a valid wallet address.";
+    return;
+  }
+  if (!Number.isFinite(amount) || amount <= 0 || !/^\\d+(\\.\\d{1,6})?$/.test(String(document.getElementById("withdrawAmount").value))) {
+    message.textContent = "Enter a valid amount (maximum 6 decimal places).";
+    return;
+  }
+
+  button.disabled = true;
+  message.textContent = "Sending withdrawal request...";
+
+  try {
+    const response = await fetch(API_URL + "/api/withdraw", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        initData: window.telegramInitData,
+        wallet_address: wallet,
+        amount: amount
+      })
+    });
+
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "Withdrawal request failed");
+    }
+
+    message.textContent = "Withdrawal request submitted. Status: PENDING.";
+    document.getElementById("withdrawAmount").value = "";
+
+    await refreshBalance();
+    if (typeof loadTransactions === "function") await loadTransactions();
+
+  } catch (error) {
+    message.textContent = error.message || "Withdrawal failed.";
+  } finally {
+    button.disabled = false;
+  }
+}
+
 async function refreshBalance() {
   const response = await fetch(API_URL + '/api/telegram-auth', {
     method: 'POST',
@@ -406,8 +458,12 @@ async function refreshBalance() {
   const result = await response.json();
 
   if (result.success && result.user) {
-    document.getElementById('mainBalance').textContent =
-      '$' + Number(result.user.balance).toFixed(2);
+    const balanceText = '$' + Number(result.user.balance).toFixed(6);
+    const mainBalance = document.getElementById('mainBalance');
+    const withdrawBalance = document.getElementById('withdrawBalance');
+
+    if (mainBalance) mainBalance.textContent = balanceText;
+    if (withdrawBalance) withdrawBalance.textContent = balanceText;
   }
 }
 
