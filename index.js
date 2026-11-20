@@ -113,6 +113,33 @@ app.post("/api/watch-heartbeat", async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+
+app.post("/api/watch-stop", async (req, res) => {
+  try {
+    const user = verifyTelegramInitData(req.body.initData || "");
+    const sessionId = req.body.session_id;
+
+    if (!user || !user.id || !sessionId) {
+      return res.status(401).json({ success: false });
+    }
+
+    const { data, error } = await supabase.rpc(
+      "stop_watch_session",
+      {
+        p_session_id: sessionId,
+        p_telegram_id: user.id
+      }
+    );
+
+    if (error) throw error;
+
+    res.json(data);
+  } catch (error) {
+    console.error("Watch stop:", error.message);
+    res.status(500).json({ success: false });
+  }
+});
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Oddly Lab server: http://localhost:${PORT}`);
 });
