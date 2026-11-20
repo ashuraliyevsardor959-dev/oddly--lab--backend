@@ -1,4 +1,7 @@
 
+
+
+
 const crypto = require("crypto");
 const express = require("express");
 const cors = require("cors");
@@ -60,7 +63,56 @@ app.get("/api/db-check", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+app.post("/api/watch-start", async (req, res) => {
+  try {
+    const user = verifyTelegramInitData(req.body.initData || "");
 
+    if (!user || !user.id) {
+      return res.status(401).json({ success: false });
+    }
+
+    const { data, error } = await supabase
+      .from("watch_sessions")
+      .insert({
+        telegram_id: user.id,
+        status: "active"
+      })
+      .select("id")
+      .single();
+
+    if (error) throw error;
+
+    res.json({ success: true, session_id: data.id });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ success: false });
+  }
+});
+app.post("/api/watch-heartbeat", async (req, res) => {
+  try {
+    const user = verifyTelegramInitData(req.body.initData || "");
+    const sessionId = req.body.session_id;
+
+    if (!user || !user.id || !sessionId) {
+      return res.status(401).json({ success: false });
+    }
+
+    const { data, error } = await supabase.rpc(
+      "add_watch_earning",
+      {
+        p_session_id: sessionId,
+        p_telegram_id: user.id
+      }
+    );
+
+    if (error) throw error;
+
+    res.json(data);
+  } catch (error) {
+    console.error("Watch heartbeat:", error.message);
+    res.status(500).json({ success: false });
+  }
+});
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Oddly Lab server: http://localhost:${PORT}`);
 });
