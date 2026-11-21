@@ -292,7 +292,7 @@ if (result.user.photo_url) {
       "$" + Number(result.user.balance).toFixed(2);
 
     document.getElementById("ref").value =
-      "https://t.me/OddlySatisfyingLabBot?start=ref_" + result.user.telegram_id;
+      "https://t.me/OddlySatisfyingLabBot?startapp=ref_" + result.user.telegram_id;
     document.getElementById("referralEarnings").textContent =
       "$" + Number(result.user.referral_earnings || 0).toFixed(6);
     document.getElementById("referralCount").textContent =
@@ -629,7 +629,7 @@ async function refreshBalance() {
     const count = document.getElementById("referralCount");
 
     if (ref) ref.value =
-      "https://t.me/OddlySatisfyingLabBot?start=ref_" + result.user.telegram_id;
+      "https://t.me/OddlySatisfyingLabBot?startapp=ref_" + result.user.telegram_id;
     if (earnings) earnings.textContent =
       "$" + Number(result.user.referral_earnings || 0).toFixed(6);
     if (count) count.textContent =
