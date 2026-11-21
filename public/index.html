@@ -600,7 +600,6 @@ async function requestWithdrawal() {
 
     await refreshBalance();
     await loadTransactions();
-    if (typeof loadTransactions === "function") await loadTransactions();
 
   } catch (error) {
     message.textContent = error.message || "Withdrawal failed.";
@@ -658,6 +657,7 @@ async function sendHeartbeat() {
     }
 
     await refreshBalance();
+    await loadTransactions();
   })();
 
   try {
@@ -743,6 +743,7 @@ async function stopWatch() {
     }
 
     await refreshBalance();
+    await loadTransactions();
     watchSessionId = null;
     document.getElementById('timer').textContent = 'Session finished';
 
