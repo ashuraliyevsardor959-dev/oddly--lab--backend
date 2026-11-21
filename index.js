@@ -135,6 +135,18 @@ app.post("/api/watch-start", async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+async function checkReferralBonus(telegramId) {
+  try {
+    const { data, error } = await supabase.rpc("award_referral_bonus", {
+      p_telegram_id: telegramId
+    });
+    if (error) throw error;
+    if (data?.success) console.log("REFERRAL BONUS AWARDED:", telegramId);
+  } catch (error) {
+    console.error("Referral bonus check:", error.message);
+  }
+}
+
 app.post("/api/watch-heartbeat", async (req, res) => {
   try {
     const user = verifyTelegramInitData(req.body.initData || "");
@@ -153,6 +165,7 @@ app.post("/api/watch-heartbeat", async (req, res) => {
     );
 
     if (error) throw error;
+    await checkReferralBonus(user.id);
 
     res.json(data);
   } catch (error) {
@@ -180,6 +193,7 @@ app.post("/api/watch-stop", async (req, res) => {
     );
 
     if (error) throw error;
+    await checkReferralBonus(user.id);
 
     res.json(data);
   } catch (error) {
@@ -398,6 +412,21 @@ app.post("/api/telegram-auth", async (req, res) => {
     }
 
     const telegramId = String(user.id);
+    const signedParams = new URLSearchParams(req.body.initData || "");
+    const startParam = signedParams.get("start_param") || "";
+    const referralMatch = startParam.match(/^ref_(\d{5,20})$/);
+    let referrerId = null;
+
+    if (referralMatch && referralMatch[1] !== telegramId) {
+      const { data: referrer, error: refError } = await supabase
+        .from("profiles")
+        .select("telegram_id")
+        .eq("telegram_id", referralMatch[1])
+        .maybeSingle();
+
+      if (refError) throw refError;
+      if (referrer) referrerId = referrer.telegram_id;
+    }
 
     let { data: profile, error } = await supabase
       .from("profiles")
@@ -416,7 +445,8 @@ app.post("/api/telegram-auth", async (req, res) => {
           full_name: [user.first_name, user.last_name]
             .filter(Boolean)
             .join(" "),
-          balance: 0
+          balance: 0,
+          referred_by: referrerId
         })
         .select("*")
         .single();
@@ -432,6 +462,8 @@ app.post("/api/telegram-auth", async (req, res) => {
     username: profile.username,
     full_name: profile.full_name,
     balance: profile.balance,
+    referral_earnings: profile.referral_earnings || 0,
+    referral_count: profile.referral_count || 0,
     photo_url: user.photo_url || null
   }
 });

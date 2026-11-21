@@ -159,14 +159,14 @@ input{
  <section id="bonus" class="page">
   <h2>Referral bonus</h2>
   <div class="card">
-   <div class="balance">$0.00</div>
-   <div class="small">Your referral earnings</div>
-   <h3>Invite friends</h3>
-   <p class="small">Share your link and invite friends to Oddly Lab.</p>
-   <input id="ref" value="Your referral link will appear here" readonly>
-   <button class="action" onclick="copyRef()">COPY LINK</button>
+    <div class="balance" id="referralEarnings">$0.000000</div>
+    <div class="small">Your referral earnings</div>
+    <h3 id="referralCount">Invited friends: 0</h3>
+    <p class="small">Earn $1.05 for each friend who watches for 10 minutes.</p>
+    <input id="ref" value="Your referral link will appear here" readonly>
+    <button class="action" onclick="copyRef()">COPY LINK</button>
   </div>
- </section>
+</section>
 
  <section id="withdraw" class="page">
   <h2>Withdraw</h2>
@@ -255,7 +255,7 @@ async function connectTelegram() {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ initData })
+      body: JSON.stringify({ initData, startParam: tg.initDataUnsafe?.start_param || '' })
     });
 
     const result = await response.json();
@@ -290,6 +290,14 @@ if (result.user.photo_url) {
 }
     document.getElementById("mainBalance").textContent =
       "$" + Number(result.user.balance).toFixed(2);
+
+    document.getElementById("ref").value =
+      "https://t.me/OddlySatisfyingLabBot?start=ref_" + result.user.telegram_id;
+    document.getElementById("referralEarnings").textContent =
+      "$" + Number(result.user.referral_earnings || 0).toFixed(6);
+    document.getElementById("referralCount").textContent =
+      "Invited friends: " + Number(result.user.referral_count || 0);
+
     await restoreWatchSession();
 
     } catch (error) {
@@ -605,6 +613,17 @@ async function refreshBalance() {
 
     if (mainBalance) mainBalance.textContent = balanceText;
     if (withdrawBalance) withdrawBalance.textContent = balanceText;
+
+    const ref = document.getElementById("ref");
+    const earnings = document.getElementById("referralEarnings");
+    const count = document.getElementById("referralCount");
+
+    if (ref) ref.value =
+      "https://t.me/OddlySatisfyingLabBot?start=ref_" + result.user.telegram_id;
+    if (earnings) earnings.textContent =
+      "$" + Number(result.user.referral_earnings || 0).toFixed(6);
+    if (count) count.textContent =
+      "Invited friends: " + Number(result.user.referral_count || 0);
   }
 }
 
@@ -723,10 +742,20 @@ async function stopWatch() {
   }
 }
 
-function copyRef(){
- let v=document.getElementById('ref');
- v.select();document.execCommand('copy');
- alert('Copied');
+async function copyRef() {
+  const link = document.getElementById("ref").value;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(link);
+    } else {
+      const input = document.getElementById("ref");
+      input.select();
+      if (!document.execCommand("copy")) throw new Error("Copy failed");
+    }
+    alert("Referral link copied!");
+  } catch (error) {
+    alert("Havolani qo‘lda nusxalang.");
+  }
 }
 </script>
 </body>
