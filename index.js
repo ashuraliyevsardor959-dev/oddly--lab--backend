@@ -218,9 +218,29 @@ app.post("/api/transactions", async (req, res) => {
 
     if (error) throw error;
 
+    const tashkentDate = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Tashkent",
+      year: "numeric", month: "2-digit", day: "2-digit"
+    }).format(new Date());
+    const dayStart = new Date(tashkentDate + "T00:00:00+05:00").toISOString();
+
+    const { data: todayRows, error: todayError } = await supabase
+      .from("transactions")
+      .select("amount")
+      .eq("telegram_id", user.id)
+      .eq("type", "watch_earning")
+      .gte("created_at", dayStart);
+
+    if (todayError) throw todayError;
+
+    const todayWatchSeconds = (todayRows || []).reduce(
+      (sum, row) => sum + Number(row.amount || 0) * 480, 0
+    );
+
     res.json({
       success: true,
-      transactions: data || []
+      transactions: data || [],
+      today_watch_seconds: Math.floor(todayWatchSeconds)
     });
   } catch (error) {
     console.error("Transactions:", error.message);

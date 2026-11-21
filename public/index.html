@@ -145,14 +145,14 @@ input{
   </div>
 
   <div class="card">
-   <div class="row"><b>Daily goal</b><b class="green">0 / 60 min</b></div>
+   <div class="row"><b>Daily goal</b><b class="green" id="dailyGoalText">0 / 60 min</b></div>
    <div style="height:8px;background:#061a15;border-radius:10px;margin-top:14px">
-    <div style="height:8px;width:0%;background:#37d9ad;border-radius:10px"></div>
+    <div id="dailyGoalBar" style="height:8px;width:0%;background:#37d9ad;border-radius:10px"></div>
    </div>
   </div>
   <div class="stats">
    <div class="stat"><span class="small">Today's earning</span><strong id="liveEarning">$0.00</strong></div>
-   <div class="stat"><span class="small">Total watched</span><strong>0 min</strong></div>
+   <div class="stat"><span class="small">Total watched</span><strong id="totalWatchedToday">0 min</strong></div>
   </div>
  </section>
 
@@ -334,6 +334,16 @@ async function loadTransactions() {
     if (!response.ok || !result.success) {
       throw new Error("Tranzaksiyalarni yuklab bo‘lmadi");
     }
+
+    const watchedSeconds = Number(result.today_watch_seconds || 0);
+    const watchedMinutes = Math.floor(watchedSeconds / 60);
+    const goalProgress = Math.min(100, watchedSeconds / 3600 * 100);
+    const goalText = document.getElementById("dailyGoalText");
+    const goalBar = document.getElementById("dailyGoalBar");
+    const totalWatched = document.getElementById("totalWatchedToday");
+    if (goalText) goalText.textContent = watchedMinutes + " / 60 min";
+    if (goalBar) goalBar.style.width = goalProgress + "%";
+    if (totalWatched) totalWatched.textContent = watchedMinutes + " min";
 
     list.textContent = "";
 
@@ -589,6 +599,7 @@ async function requestWithdrawal() {
     document.getElementById("withdrawAmount").value = "";
 
     await refreshBalance();
+    await loadTransactions();
     if (typeof loadTransactions === "function") await loadTransactions();
 
   } catch (error) {
